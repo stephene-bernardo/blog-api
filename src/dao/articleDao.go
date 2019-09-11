@@ -10,13 +10,11 @@ import (
 
 type ArticleDao struct {
   Db *sql.DB
+  table string
 }
 
-
-
-
 func (articleDao *ArticleDao) FindAll()([]ArticleObject, error){
-  findAllQuery := "SELECT * FROM article"
+  findAllQuery := fmt.Sprintf("SELECT * FROM %s",  articleDao.table)
   rows, err :=  articleDao.Db.Query(findAllQuery)
   if err != nil {
     log.Fatal(err)
@@ -33,7 +31,7 @@ func (articleDao *ArticleDao) FindAll()([]ArticleObject, error){
 }
 
 func (articleDao *ArticleDao) FindById(id int)(ArticleObject, error){
-  findByIdQuery := fmt.Sprintf("SELECT * FROM article WHERE id = %d", id)
+  findByIdQuery := fmt.Sprintf("SELECT * FROM %s WHERE id = %d", articleDao.table, id)
   rows, err :=  articleDao.Db.Query(findByIdQuery)
   if err != nil {
     log.Fatal(err)
@@ -50,19 +48,24 @@ func (articleDao *ArticleDao) FindById(id int)(ArticleObject, error){
 }
 
 func (articleDao *ArticleDao) Insert(title , content, author string) (error){
-  insertUserQuery := "INSERT INTO article( title, content, author)VALUES($1, $2, $3)"
+  insertUserQuery := fmt.Sprintf("INSERT INTO %s( title, content, author)VALUES($1, $2, $3)", articleDao.table)
   _, err :=  articleDao.Db.Query(insertUserQuery, title, content, author)
   if err != nil {
     log.Fatal(err)
+  } else {
+    log.Println(fmt.Sprintf("Inserted title: %s in the database", title))
   }
+
   return err
 }
 
 func (articleDao *ArticleDao) Delete(id int) (error){
-  deleteUserQuery := fmt.Sprintf("DELETE FROM article WHERE id = %d", id)
+  deleteUserQuery := fmt.Sprintf("DELETE FROM %s WHERE id = %d",articleDao.table ,id)
   _, err := articleDao.Db.Query(deleteUserQuery)
   if err != nil {
     log.Fatal(err)
+  } else {
+    log.Println(fmt.Sprintf("Deleted id: %d in the database", id))
   }
   return err
 }
