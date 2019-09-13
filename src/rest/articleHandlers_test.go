@@ -12,108 +12,91 @@ import (
 )
 
 var mockArticleDao *mocks.ArticleDaoInterface
+var articleObject dao.ArticleObject
+
 func TestMain(m *testing.M){
 	mockArticleDao = new(mocks.ArticleDaoInterface)
+	articleObject = dao.ArticleObject{1, "Java Lang", "Some Content", "Mr.Java"}
 	m.Run()
 }
 
 func TestArticleHandler_GetAllHandler(t *testing.T) {
-	article1 := dao.ArticleObject{1, "Java Lang", "SomeContent", "Mr.Java"}
-	mockArticleDao.On("FindAll").Return([]dao.ArticleObject{article1}, nil)
+	mockArticleDao.On("FindAll").Return([]dao.ArticleObject{articleObject}, nil)
 	articleHandlers := ArticleHandler{mockArticleDao}
 
-	req, err := http.NewRequest("GET", "/articles", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	req, _ := http.NewRequest("GET", "/articles", nil)
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(articleHandlers.GetAllHandler)
 	handler.ServeHTTP(rr, req)
 
-	mockArticleDao.AssertCalled(t, "FindAll")
-	var list ArticleGetAllResponse
-	json.NewDecoder(rr.Body).Decode(&list)
+	var response ArticleGetAllResponse
+	json.NewDecoder(rr.Body).Decode(&response)
 	assert.EqualValues(t, http.StatusOK, rr.Code)
-	assert.EqualValues(t, http.StatusOK, list.Status)
-	assert.EqualValues(t, "Success", list.Message)
-	assert.EqualValues(t, 1, list.Data[0].Id)
-	assert.EqualValues(t, "Mr.Java", list.Data[0].Author)
-	assert.EqualValues(t, "SomeContent", list.Data[0].Content)
-	assert.EqualValues(t, "Java Lang", list.Data[0].Title)
+	assert.EqualValues(t, http.StatusOK, response.Status)
+	assert.EqualValues(t, HttpResponseSuccessMessage, response.Message)
+	assertArticle(t, articleObject, response.Data[0])
 }
 
 func TestArticleHandler_GetByIdHandler(t *testing.T) {
-	mockArticleDao := new(mocks.ArticleDaoInterface)
-	article1 := dao.ArticleObject{1, "Java Lang", "SomeContent", "Mr.Java"}
-	mockArticleDao.On("FindById", 1).Return(article1, nil)
+	mockArticleDao.On("FindById", articleObject.Id).Return(articleObject, nil)
 	articleHandlers := ArticleHandler{mockArticleDao}
 
-	req, err := http.NewRequest("GET", "/articles/1", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	req, _ := http.NewRequest("GET", "/articles/1", nil)
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(articleHandlers.GetByIdHandler)
 	handler.ServeHTTP(rr, req)
 
-	mockArticleDao.AssertCalled(t, "FindById", 1)
-	var list ArticleGetIdResponse
-	json.NewDecoder(rr.Body).Decode(&list)
+	var response ArticleGetIdResponse
+	json.NewDecoder(rr.Body).Decode(&response)
 	assert.EqualValues(t, http.StatusOK, rr.Code)
-	assert.EqualValues(t, http.StatusOK, list.Status)
-	assert.EqualValues(t, "Success", list.Message)
-	assert.EqualValues(t, 1, list.Data.Id)
-	assert.EqualValues(t, "Mr.Java", list.Data.Author)
-	assert.EqualValues(t, "SomeContent", list.Data.Content)
-	assert.EqualValues(t, "Java Lang", list.Data.Title)
+	assert.EqualValues(t, http.StatusOK, response.Status)
+	assert.EqualValues(t, HttpResponseSuccessMessage, response.Message)
+	assertArticle(t, articleObject, response.Data)
+}
+
+func assertArticle(t *testing.T, expectedArticle dao.ArticleObject, actualArticle dao.ArticleObject){
+	assert.EqualValues(t, expectedArticle.Id, actualArticle.Id)
+	assert.EqualValues(t, expectedArticle.Title, actualArticle.Title)
+	assert.EqualValues(t, expectedArticle.Content, actualArticle.Content)
+	assert.EqualValues(t, expectedArticle.Author, actualArticle.Author)
 }
 
 func TestArticleHandler_InsertHandler(t *testing.T) {
-	mockArticleDao := new(mocks.ArticleDaoInterface)
-	article1 := dao.ArticleObject{1, "Java Lang", "SomeContent", "Mr.Java"}
-	mockArticleDao.On("Insert", "Java Lang", "SomeContent", "Mr.Java").Return(1, nil)
+	mockArticleDao.On(
+		"Insert",
+		articleObject.Title,
+		articleObject.Content,
+		articleObject.Author).Return(articleObject.Id, nil)
 	articleHandlers := ArticleHandler{mockArticleDao}
-	s, _ := json.Marshal(article1)
-	b := bytes.NewBuffer(s)
-	req, err := http.NewRequest("POST", "/articles", b)
-	if err != nil {
-		t.Fatal(err)
-	}
+	jsonArticle, _ := json.Marshal(articleObject)
 
+	req, _ := http.NewRequest("POST", "/articles", bytes.NewBuffer(jsonArticle))
 	rr :=  httptest.NewRecorder()
 	handler := http.HandlerFunc(articleHandlers.InsertHandler)
 	handler.ServeHTTP(rr, req)
 
-	mockArticleDao.AssertCalled(t, "Insert", "Java Lang", "SomeContent", "Mr.Java")
-	var list ArticlePostResponse
-	json.NewDecoder(rr.Body).Decode(&list)
+	var response ArticlePostResponse
+	json.NewDecoder(rr.Body).Decode(&response)
 	assert.EqualValues(t, http.StatusCreated, rr.Code)
-	assert.EqualValues(t, http.StatusCreated, list.Status)
-	assert.EqualValues(t, "Success", list.Message)
-	assert.EqualValues(t, 1, list.Data.Id)
+	assert.EqualValues(t, http.StatusCreated, response.Status)
+	assert.EqualValues(t, HttpResponseCreatedMessage, response.Message)
+	assert.EqualValues(t, articleObject.Id, response.Data.Id)
 }
 
 
 func TestArticleHandler_DeleteHandler(t *testing.T) {
-	mockArticleDao := new(mocks.ArticleDaoInterface)
-	mockArticleDao.On("Delete", 1).Return("Java Lang", nil)
+	mockArticleDao.On("Delete", articleObject.Id).Return(articleObject.Title, nil)
 	articleHandlers := ArticleHandler{mockArticleDao}
-	req, err := http.NewRequest("DELETE", "/articles/1", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
 
+	req, _ := http.NewRequest("DELETE", "/articles/1", nil)
 	rr :=  httptest.NewRecorder()
 	handler := http.HandlerFunc(articleHandlers.RemoveHandler)
 	handler.ServeHTTP(rr, req)
 
-	mockArticleDao.AssertCalled(t, "Delete", 1)
-	var list ArticleDeleteResponse
-	json.NewDecoder(rr.Body).Decode(&list)
+	var response ArticleDeleteResponse
+	json.NewDecoder(rr.Body).Decode(&response)
 	assert.EqualValues(t, http.StatusOK, rr.Code)
-	assert.EqualValues(t, http.StatusOK, list.Status)
-	assert.EqualValues(t, "Success", list.Message)
-	assert.EqualValues(t, "Java Lang", list.Data.Title)
+	assert.EqualValues(t, http.StatusOK, response.Status)
+	assert.EqualValues(t, HttpResponseSuccessMessage, response.Message)
+	assert.EqualValues(t, articleObject.Title, response.Data.Title)
 }
