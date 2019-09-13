@@ -62,13 +62,9 @@ func TestArticleDao(t *testing.T){
   })
 
   t.Run("delete article", func(t *testing.T) {
-    articleDao.Delete(3)
+    title, _ := articleDao.Delete(3)
 
-    articles, _ := articleDao.FindAll()
-
-    for _, elem := range articles {
-      assert.NotEqual(t, perlArticle.title, elem)
-    }
+   assert.Equal(t, perlArticle.title, title)
   })
 
   db.Query(queryStringForDropTable)
