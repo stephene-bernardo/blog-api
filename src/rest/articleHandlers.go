@@ -3,6 +3,7 @@ package rest
 import (
 	"blog-api/src/dao"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,6 +12,8 @@ import (
 const (
 	HttpResponseSuccessMessage = "Success"
 	HttpResponseCreatedMessage = "Created"
+	HttpResponseErrorPathParameterMessage = "must specify integer value in path paramater"
+	HttpResponseErrorArticleNotFound = "article id:%d not found"
 )
 
 type ArticleHandler struct {
@@ -28,16 +31,41 @@ func (a *ArticleHandler)InsertHandler(w http.ResponseWriter, r *http.Request){
 }
 
 func (a *ArticleHandler)GetAllHandler(w http.ResponseWriter, r *http.Request){
-	objects, _ := a.ArticleDao.FindAll()
-	articleResponse := ArticleGetAllResponse{200, HttpResponseSuccessMessage, objects}
+	objects, err := a.ArticleDao.FindAll()
+	var articleResponse ArticleGetAllResponse
+	if err != nil {
+		articleResponse = ArticleGetAllResponse{http.StatusFailedDependency, err.Error(), nil}
+		w.WriteHeader(http.StatusFailedDependency)
+
+	} else {
+		articleResponse = ArticleGetAllResponse{200, HttpResponseSuccessMessage, &objects}
+		json.NewEncoder(w).Encode(articleResponse)
+	}
 	json.NewEncoder(w).Encode(articleResponse)
 }
 
 func (a *ArticleHandler)GetByIdHandler(w http.ResponseWriter, r *http.Request){
 	arr := strings.Split(r.URL.Path, "/")
-	id, _:= strconv.Atoi(arr[len(arr)-1])
-	object, _ := a.ArticleDao.FindById(id)
-	articleResponse := ArticleGetIdResponse{200, HttpResponseSuccessMessage, object}
+	id, err := strconv.Atoi(arr[len(arr)-1])
+	var articleResponse ArticleGetIdResponse
+	if err != nil {
+		articleResponse = ArticleGetIdResponse{http.StatusBadRequest,
+			HttpResponseErrorPathParameterMessage,
+			nil}
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		object, err := a.ArticleDao.FindById(id)
+		if err != nil {
+			articleResponse = ArticleGetIdResponse{http.StatusFailedDependency, err.Error(), nil}
+			w.WriteHeader(http.StatusFailedDependency)
+		} else if object.Id == 0 {
+			w.WriteHeader(http.StatusNotFound)
+			articleResponse = ArticleGetIdResponse{http.StatusNotFound,
+				fmt.Sprintf(HttpResponseErrorArticleNotFound, id), nil}
+		} else {
+			articleResponse = ArticleGetIdResponse{200, HttpResponseSuccessMessage, &object}
+		}
+	}
 	json.NewEncoder(w).Encode(articleResponse)
 }
 

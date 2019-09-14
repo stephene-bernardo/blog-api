@@ -5,6 +5,8 @@ import (
 	"blog-api/src/dao"
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -13,14 +15,15 @@ import (
 
 var mockArticleDao *mocks.ArticleDaoInterface
 var articleObject dao.ArticleObject
+const databaseConnectionErrorMessage = "connection to database failed"
 
 func TestMain(m *testing.M){
-	mockArticleDao = new(mocks.ArticleDaoInterface)
 	articleObject = dao.ArticleObject{1, "Java Lang", "Some Content", "Mr.Java"}
 	m.Run()
 }
 
 func TestArticleHandler_GetAllHandler(t *testing.T) {
+	mockArticleDao = new(mocks.ArticleDaoInterface)
 	mockArticleDao.On("FindAll").Return([]dao.ArticleObject{articleObject}, nil)
 	articleHandlers := ArticleHandler{mockArticleDao}
 
@@ -34,10 +37,29 @@ func TestArticleHandler_GetAllHandler(t *testing.T) {
 	assert.EqualValues(t, http.StatusOK, rr.Code)
 	assert.EqualValues(t, http.StatusOK, response.Status)
 	assert.EqualValues(t, HttpResponseSuccessMessage, response.Message)
-	assertArticle(t, articleObject, response.Data[0])
+	assertArticle(t, articleObject, (*response.Data)[0])
+}
+
+func TestArticleHandler_GetAllHandlerDatabaseError(t *testing.T) {
+	mockArticleDao = new(mocks.ArticleDaoInterface)
+	mockArticleDao.On("FindAll").Return(nil, errors.New(databaseConnectionErrorMessage))
+	articleHandlers := ArticleHandler{mockArticleDao}
+
+	req, _ := http.NewRequest("GET", "/articles", nil)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(articleHandlers.GetAllHandler)
+	handler.ServeHTTP(rr, req)
+
+	var response ArticleGetAllResponse
+	json.NewDecoder(rr.Body).Decode(&response)
+	assert.EqualValues(t, http.StatusFailedDependency, rr.Code)
+	assert.EqualValues(t, http.StatusFailedDependency, response.Status)
+	assert.EqualValues(t, databaseConnectionErrorMessage, response.Message)
+	assert.Nil(t, response.Data)
 }
 
 func TestArticleHandler_GetByIdHandler(t *testing.T) {
+	mockArticleDao = new(mocks.ArticleDaoInterface)
 	mockArticleDao.On("FindById", articleObject.Id).Return(articleObject, nil)
 	articleHandlers := ArticleHandler{mockArticleDao}
 
@@ -51,8 +73,65 @@ func TestArticleHandler_GetByIdHandler(t *testing.T) {
 	assert.EqualValues(t, http.StatusOK, rr.Code)
 	assert.EqualValues(t, http.StatusOK, response.Status)
 	assert.EqualValues(t, HttpResponseSuccessMessage, response.Message)
-	assertArticle(t, articleObject, response.Data)
+	assertArticle(t, articleObject, *response.Data)
 }
+
+func TestArticleHandler_GetByIdHandlerErrorInPathParameterType(t *testing.T) {
+	mockArticleDao = new(mocks.ArticleDaoInterface)
+	mockArticleDao.On("FindById", articleObject.Id).Return(dao.ArticleObject{}, nil)
+	articleHandlers := ArticleHandler{mockArticleDao}
+
+	req, _ := http.NewRequest("GET", "/articles/wrongtype", nil)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(articleHandlers.GetByIdHandler)
+	handler.ServeHTTP(rr, req)
+
+	var response ArticleGetIdResponse
+	json.NewDecoder(rr.Body).Decode(&response)
+	assert.EqualValues(t, http.StatusBadRequest, rr.Code)
+	assert.EqualValues(t, http.StatusBadRequest, response.Status)
+	assert.EqualValues(t, HttpResponseErrorPathParameterMessage, response.Message)
+	assert.Nil(t, response.Data)
+}
+
+func TestArticleHandler_GetByIdHandlerDatabaseError(t *testing.T) {
+	mockArticleDao = new(mocks.ArticleDaoInterface)
+	mockArticleDao.On("FindById", articleObject.Id).Return(articleObject,
+		errors.New(databaseConnectionErrorMessage))
+	articleHandlers := ArticleHandler{mockArticleDao}
+
+	req, _ := http.NewRequest("GET", "/articles/1", nil)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(articleHandlers.GetByIdHandler)
+	handler.ServeHTTP(rr, req)
+
+	var response ArticleGetIdResponse
+	json.NewDecoder(rr.Body).Decode(&response)
+	assert.EqualValues(t, http.StatusFailedDependency, rr.Code)
+	assert.EqualValues(t, http.StatusFailedDependency, response.Status)
+	assert.EqualValues(t, databaseConnectionErrorMessage, response.Message)
+	assert.Nil(t, response.Data)
+}
+
+func TestArticleHandler_GetByIdHandlerArticleNotFound(t *testing.T) {
+	mockArticleDao = new(mocks.ArticleDaoInterface)
+	const missingArticle = 2
+	mockArticleDao.On("FindById", missingArticle).Return(dao.ArticleObject{}, nil)
+	articleHandlers := ArticleHandler{mockArticleDao}
+
+	req, _ := http.NewRequest("GET", "/articles/2", nil)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(articleHandlers.GetByIdHandler)
+	handler.ServeHTTP(rr, req)
+
+	var response ArticleGetIdResponse
+	json.NewDecoder(rr.Body).Decode(&response)
+	assert.EqualValues(t, http.StatusNotFound, rr.Code)
+	assert.EqualValues(t, http.StatusNotFound, response.Status)
+	assert.EqualValues(t, fmt.Sprintf(HttpResponseErrorArticleNotFound, missingArticle), response.Message)
+	assert.Nil(t, response.Data)
+}
+
 
 func assertArticle(t *testing.T, expectedArticle dao.ArticleObject, actualArticle dao.ArticleObject){
 	assert.EqualValues(t, expectedArticle.Id, actualArticle.Id)
@@ -62,6 +141,7 @@ func assertArticle(t *testing.T, expectedArticle dao.ArticleObject, actualArticl
 }
 
 func TestArticleHandler_InsertHandler(t *testing.T) {
+	mockArticleDao = new(mocks.ArticleDaoInterface)
 	mockArticleDao.On(
 		"Insert",
 		articleObject.Title,
@@ -83,8 +163,8 @@ func TestArticleHandler_InsertHandler(t *testing.T) {
 	assert.EqualValues(t, articleObject.Id, response.Data.Id)
 }
 
-
 func TestArticleHandler_DeleteHandler(t *testing.T) {
+	mockArticleDao = new(mocks.ArticleDaoInterface)
 	mockArticleDao.On("Delete", articleObject.Id).Return(articleObject.Title, nil)
 	articleHandlers := ArticleHandler{mockArticleDao}
 

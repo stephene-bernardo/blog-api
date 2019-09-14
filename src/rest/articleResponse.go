@@ -15,14 +15,14 @@ type ArticlePostData struct {
 type ArticleGetIdResponse struct {
 	Status int `json:"status"`
 	Message string `json:"message"`
-	Data dao.ArticleObject `json:"data"`
+	Data *dao.ArticleObject `json:"data"`
 }
 
 
 type ArticleGetAllResponse struct {
 	Status int `json:"status"`
 	Message string `json:"message"`
-	Data []dao.ArticleObject `json:"data"`
+	Data *[]dao.ArticleObject `json:"data"`
 }
 
 type ArticleDeleteResponse struct {

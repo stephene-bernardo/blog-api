@@ -13,7 +13,6 @@ import (
 )
 
 func main(){
-
 	baseurl := "localhost"
 	port := "8080"
 	postgresHost := "localhost"
