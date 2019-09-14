@@ -16,13 +16,33 @@ func main(){
 	baseurl := "localhost"
 	port := "8080"
 	postgresHost := "localhost"
+	postgresPort := "5432"
+	postgresDbName := "blog"
+	postgresPassword:="abc123"
+	postgresUser:="postgres"
 	if os.Getenv("BASE_URL") != "" {
 		baseurl = os.Getenv("BASE_URL")
 	}
 	if os.Getenv("POSTGRES_HOST") != "" {
 		postgresHost = os.Getenv("POSTGRES_HOST")
 	}
-	connStr:=fmt.Sprintf("user=postgres dbname=blog password=abc123 port=5432 sslmode=disable host=%s", postgresHost)
+	if os.Getenv("POSTGRES_PORT") != ""{
+		postgresPort =os.Getenv("POSTGRES_PORT")
+	}
+	if os.Getenv("POSTGRES_DB_NAME") != ""{
+		postgresDbName =os.Getenv("POSTGRES_DB_NAME")
+	}
+	if os.Getenv("POSTGRES_USER") != ""{
+		postgresUser =os.Getenv("POSTGRES_USER")
+	}
+	if os.Getenv("POSTGRES_PASSWORD") != ""{
+		postgresPassword =os.Getenv("POSTGRES_PASSWORD")
+	}
+	connStr:=fmt.Sprintf("user=%s dbname=%s password=%s port=%s sslmode=disable host=%s", postgresUser,
+		postgresDbName,
+		postgresPassword,
+		postgresPort,
+		postgresHost)
 	db, err := sql.Open("postgres", connStr)
 	var databaseTable = "article"
 	var queryStringForCreateTable = fmt.Sprintf(`CREATE TABLE %s (id serial not null primary key, TITLE VARCHAR,
