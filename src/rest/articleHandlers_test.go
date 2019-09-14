@@ -260,3 +260,39 @@ func TestArticleHandler_DeleteHandler(t *testing.T) {
 	assert.EqualValues(t, HttpResponseSuccessMessage, response.Message)
 	assert.EqualValues(t, articleObject.Title, response.Data.Title)
 }
+
+func TestArticleHandler_DeleteHandlerDatabaseError(t *testing.T) {
+	mockArticleDao = new(mocks.ArticleDaoInterface)
+	mockArticleDao.On("Delete", articleObject.Id).Return("",
+		errors.New(databaseConnectionErrorMessage))
+	articleHandlers := ArticleHandler{mockArticleDao}
+
+	req, _ := http.NewRequest("DELETE", "/articles/1", nil)
+	rr :=  httptest.NewRecorder()
+	handler := http.HandlerFunc(articleHandlers.RemoveHandler)
+	handler.ServeHTTP(rr, req)
+
+	var response ArticleDeleteResponse
+	json.NewDecoder(rr.Body).Decode(&response)
+	assert.EqualValues(t, http.StatusFailedDependency, rr.Code)
+	assert.EqualValues(t, http.StatusFailedDependency, response.Status)
+	assert.EqualValues(t, databaseConnectionErrorMessage, response.Message)
+	assert.Nil(t, response.Data)
+}
+
+func TestArticleHandler_DeleteHandlerPathParameterTypeError(t *testing.T) {
+	mockArticleDao = new(mocks.ArticleDaoInterface)
+	articleHandlers := ArticleHandler{mockArticleDao}
+
+	req, _ := http.NewRequest("DELETE", "/articles/wrongType", nil)
+	rr :=  httptest.NewRecorder()
+	handler := http.HandlerFunc(articleHandlers.RemoveHandler)
+	handler.ServeHTTP(rr, req)
+
+	var response ArticleDeleteResponse
+	json.NewDecoder(rr.Body).Decode(&response)
+	assert.EqualValues(t, http.StatusBadRequest, rr.Code)
+	assert.EqualValues(t, http.StatusBadRequest, response.Status)
+	assert.EqualValues(t, HttpResponseErrorPathParameterMessage, response.Message)
+	assert.Nil(t, response.Data)
+}

@@ -86,9 +86,24 @@ func (a *ArticleHandler)GetByIdHandler(w http.ResponseWriter, r *http.Request){
 
 func (a *ArticleHandler)RemoveHandler(w http.ResponseWriter, r *http.Request){
 	arr := strings.Split(r.URL.Path, "/")
-	id, _:= strconv.Atoi(arr[len(arr)-1])
-	title, _:= a.ArticleDao.Delete(id)
-	articleData := ArticleDeleteData{title}
-	articleResponse := ArticleDeleteResponse{200, HttpResponseSuccessMessage, articleData}
+	id, err:= strconv.Atoi(arr[len(arr)-1])
+	var articleResponse ArticleDeleteResponse
+	if err != nil {
+		articleResponse = ArticleDeleteResponse{http.StatusBadRequest,
+			HttpResponseErrorPathParameterMessage,
+			nil}
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		title, err:= a.ArticleDao.Delete(id)
+		articleData := ArticleDeleteData{title}
+		if err != nil {
+			articleResponse = ArticleDeleteResponse{http.StatusFailedDependency,
+				err.Error(), nil}
+			w.WriteHeader(http.StatusFailedDependency)
+		} else {
+			articleResponse = ArticleDeleteResponse{200, HttpResponseSuccessMessage, &articleData}
+
+		}
+	}
 	json.NewEncoder(w).Encode(articleResponse)
 }

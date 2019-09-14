@@ -28,7 +28,7 @@ type ArticleGetAllResponse struct {
 type ArticleDeleteResponse struct {
 	Status int `json:"status"`
 	Message string `json:"message"`
-	Data ArticleDeleteData `json:"data"`
+	Data *ArticleDeleteData `json:"data"`
 }
 
 type ArticleDeleteData struct {
