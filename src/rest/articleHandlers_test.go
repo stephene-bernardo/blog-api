@@ -163,6 +163,86 @@ func TestArticleHandler_InsertHandler(t *testing.T) {
 	assert.EqualValues(t, articleObject.Id, response.Data.Id)
 }
 
+func TestArticleHandler_InsertHandlerDatabaseError(t *testing.T) {
+	mockArticleDao = new(mocks.ArticleDaoInterface)
+	mockArticleDao.On(
+		"Insert",
+		articleObject.Title,
+		articleObject.Content,
+		articleObject.Author).Return(0, errors.New(databaseConnectionErrorMessage))
+	articleHandlers := ArticleHandler{mockArticleDao}
+	jsonArticle, _ := json.Marshal(articleObject)
+
+	req, _ := http.NewRequest("POST", "/articles", bytes.NewBuffer(jsonArticle))
+	rr :=  httptest.NewRecorder()
+	handler := http.HandlerFunc(articleHandlers.InsertHandler)
+	handler.ServeHTTP(rr, req)
+
+	var response ArticlePostResponse
+	json.NewDecoder(rr.Body).Decode(&response)
+	assert.EqualValues(t, http.StatusFailedDependency, rr.Code)
+	assert.EqualValues(t, http.StatusFailedDependency, response.Status)
+	assert.EqualValues(t, databaseConnectionErrorMessage, response.Message)
+	assert.Nil(t, response.Data)
+}
+
+func TestArticleHandler_InsertHandlerMissingTitleError(t *testing.T) {
+	mockArticleDao = new(mocks.ArticleDaoInterface)
+	articleHandlers := ArticleHandler{mockArticleDao}
+	jsonArticle, _ := json.Marshal(dao.ArticleObject{0, "",
+		articleObject.Content, articleObject.Author})
+
+	req, _ := http.NewRequest("POST", "/articles", bytes.NewBuffer(jsonArticle))
+	rr :=  httptest.NewRecorder()
+	handler := http.HandlerFunc(articleHandlers.InsertHandler)
+	handler.ServeHTTP(rr, req)
+
+	var response ArticlePostResponse
+	json.NewDecoder(rr.Body).Decode(&response)
+	assert.EqualValues(t, http.StatusBadRequest, rr.Code)
+	assert.EqualValues(t, http.StatusBadRequest, response.Status)
+	assert.EqualValues(t, HttpResponseIncompleteRequestMessage, response.Message)
+	assert.Nil(t, response.Data)
+}
+
+func TestArticleHandler_InsertHandlerMissingContentError(t *testing.T) {
+	mockArticleDao = new(mocks.ArticleDaoInterface)
+	articleHandlers := ArticleHandler{mockArticleDao}
+	jsonArticle, _ := json.Marshal(dao.ArticleObject{0, articleObject.Title,
+		"", articleObject.Author})
+
+	req, _ := http.NewRequest("POST", "/articles", bytes.NewBuffer(jsonArticle))
+	rr :=  httptest.NewRecorder()
+	handler := http.HandlerFunc(articleHandlers.InsertHandler)
+	handler.ServeHTTP(rr, req)
+
+	var response ArticlePostResponse
+	json.NewDecoder(rr.Body).Decode(&response)
+	assert.EqualValues(t, http.StatusBadRequest, rr.Code)
+	assert.EqualValues(t, http.StatusBadRequest, response.Status)
+	assert.EqualValues(t, HttpResponseIncompleteRequestMessage, response.Message)
+	assert.Nil(t, response.Data)
+}
+
+func TestArticleHandler_InsertHandlerMissingAuthorError(t *testing.T) {
+	mockArticleDao = new(mocks.ArticleDaoInterface)
+	articleHandlers := ArticleHandler{mockArticleDao}
+	jsonArticle, _ := json.Marshal(dao.ArticleObject{0, articleObject.Title,
+		articleObject.Content, ""})
+
+	req, _ := http.NewRequest("POST", "/articles", bytes.NewBuffer(jsonArticle))
+	rr :=  httptest.NewRecorder()
+	handler := http.HandlerFunc(articleHandlers.InsertHandler)
+	handler.ServeHTTP(rr, req)
+
+	var response ArticlePostResponse
+	json.NewDecoder(rr.Body).Decode(&response)
+	assert.EqualValues(t, http.StatusBadRequest, rr.Code)
+	assert.EqualValues(t, http.StatusBadRequest, response.Status)
+	assert.EqualValues(t, HttpResponseIncompleteRequestMessage, response.Message)
+	assert.Nil(t, response.Data)
+}
+
 func TestArticleHandler_DeleteHandler(t *testing.T) {
 	mockArticleDao = new(mocks.ArticleDaoInterface)
 	mockArticleDao.On("Delete", articleObject.Id).Return(articleObject.Title, nil)

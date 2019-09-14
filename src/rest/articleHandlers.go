@@ -14,6 +14,7 @@ const (
 	HttpResponseCreatedMessage = "Created"
 	HttpResponseErrorPathParameterMessage = "must specify integer value in path paramater"
 	HttpResponseErrorArticleNotFound = "article id:%d not found"
+	HttpResponseIncompleteRequestMessage = "should specify title, content, and author"
 )
 
 type ArticleHandler struct {
@@ -23,10 +24,24 @@ type ArticleHandler struct {
 func (a *ArticleHandler)InsertHandler(w http.ResponseWriter, r *http.Request){
 	articleObject := dao.ArticleObject{}
 	json.NewDecoder(r.Body).Decode(&articleObject)
-	userid, _ := a.ArticleDao.Insert(articleObject.Title, articleObject.Content, articleObject.Author)
-	postData := ArticlePostData{userid}
-	postResponse := ArticlePostResponse{201, HttpResponseCreatedMessage, postData}
-	w.WriteHeader(201)
+	var postResponse ArticlePostResponse
+	if articleObject.Title == "" || articleObject.Author == "" || articleObject.Content == "" {
+		postResponse = ArticlePostResponse{http.StatusBadRequest,
+			HttpResponseIncompleteRequestMessage,
+			nil}
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		userid, err := a.ArticleDao.Insert(articleObject.Title, articleObject.Content, articleObject.Author)
+		if err != nil {
+			postResponse = ArticlePostResponse{http.StatusFailedDependency, err.Error(), nil}
+			w.WriteHeader(http.StatusFailedDependency)
+		} else {
+			postData := ArticlePostData{userid}
+			postResponse = ArticlePostResponse{201, HttpResponseCreatedMessage, &postData}
+			w.WriteHeader(201)
+		}
+	}
+
 	json.NewEncoder(w).Encode(postResponse)
 }
 

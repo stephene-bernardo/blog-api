@@ -5,7 +5,7 @@ import "blog-api/src/dao"
 type ArticlePostResponse struct {
 	Status int `json:"status"`
 	Message string `json:"message"`
-	Data ArticlePostData `json:"data"`
+	Data *ArticlePostData `json:"data"`
 }
 
 type ArticlePostData struct {
