@@ -65,6 +65,7 @@ func (a *ArticleHandler)GetByIdHandler(w http.ResponseWriter, r *http.Request){
 	arr := strings.Split(r.URL.Path, "/")
 	id, err := strconv.Atoi(arr[len(arr)-1])
 	var articleResponse ArticleGetIdResponse
+	fmt.Println("sssss")
 	if err != nil {
 		articleResponse = ArticleGetIdResponse{http.StatusBadRequest,
 			HttpResponseErrorPathParameterMessage,
