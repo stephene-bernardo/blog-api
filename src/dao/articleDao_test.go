@@ -18,7 +18,7 @@ var javaArticle = article{"Java lang", "some JAVA meaningful content", "Mr. JAVA
 var perlArticle = article{"Perl", "for deletion testing", "Foo Bar"}
 
 func TestArticleDao(t *testing.T){
-  connStr:="user=postgres dbname=blog password=abc123 sslmode=disable"
+  connStr:="user=postgres dbname=postgres password=abc123 sslmode=disable"
   db, err := sql.Open("postgres", connStr)
   defer db.Close()
 

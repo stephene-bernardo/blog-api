@@ -1,0 +1,20 @@
+version: "3.7"
+services:
+  blogapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgresdb
+    environment:
+      - POSTGRES_HOST=postgresdb
+  postgresdb:
+    image: postgres:10
+    environment:
+      - POSTGRES_PASSWORD=abc123
+    ports:
+      - 5432:5432
+    restart: always
+

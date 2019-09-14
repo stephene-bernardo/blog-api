@@ -17,7 +17,7 @@ func main(){
 	port := "8080"
 	postgresHost := "localhost"
 	postgresPort := "5432"
-	postgresDbName := "blog"
+	postgresDbName := "postgres"
 	postgresPassword:="abc123"
 	postgresUser:="postgres"
 	if os.Getenv("BASE_URL") != "" {

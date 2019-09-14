@@ -2,13 +2,12 @@
 
 Application that manage articles and store it in a database.
 
-## Deploying using docker
-I have opt to include both postgres and the blog-api in one docker container for easier deployment. Not a good solution,
-ideally you would use docker compose but right now i dont have the resources to do it.
-
+## Deploying using compose
 #### How to run
-build the dockerfile
-docker build -t blogapi:1.0.0
+In the blog-api directory run
+```
+docker-compose up 
+```
 
 ## Local Deployment
 
