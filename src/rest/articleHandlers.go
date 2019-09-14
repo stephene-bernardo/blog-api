@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"blog-api/src"
 	"blog-api/src/dao"
 	"encoding/json"
 	"fmt"
@@ -10,19 +11,19 @@ import (
 )
 
 const (
-	HttpResponseSuccessMessage = "Success"
-	HttpResponseCreatedMessage = "Created"
+	HttpResponseSuccessMessage            = "Success"
+	HttpResponseCreatedMessage            = "Created"
 	HttpResponseErrorPathParameterMessage = "must specify integer value in path paramater"
-	HttpResponseErrorArticleNotFound = "article id:%d not found"
-	HttpResponseIncompleteRequestMessage = "should specify title, content, and author"
+	HttpResponseErrorArticleNotFound      = "article id:%d not found"
+	HttpResponseIncompleteRequestMessage  = "should specify title, content, and author"
 )
 
 type ArticleHandler struct {
 	ArticleDao dao.ArticleDaoInterface
 }
 
-func (a *ArticleHandler)InsertHandler(w http.ResponseWriter, r *http.Request){
-	articleObject := dao.ArticleObject{}
+func (a *ArticleHandler) InsertHandler(w http.ResponseWriter, r *http.Request) {
+	articleObject := src.ArticleObject{}
 	err := json.NewDecoder(r.Body).Decode(&articleObject)
 	var postResponse ArticlePostResponse
 	if err != nil {
@@ -49,7 +50,7 @@ func (a *ArticleHandler)InsertHandler(w http.ResponseWriter, r *http.Request){
 	json.NewEncoder(w).Encode(postResponse)
 }
 
-func (a *ArticleHandler)GetAllHandler(w http.ResponseWriter, r *http.Request){
+func (a *ArticleHandler) GetAllHandler(w http.ResponseWriter, r *http.Request) {
 	objects, err := a.ArticleDao.FindAll()
 	var articleResponse ArticleGetAllResponse
 	if err != nil {
@@ -61,7 +62,7 @@ func (a *ArticleHandler)GetAllHandler(w http.ResponseWriter, r *http.Request){
 	json.NewEncoder(w).Encode(articleResponse)
 }
 
-func (a *ArticleHandler)GetByIdHandler(w http.ResponseWriter, r *http.Request){
+func (a *ArticleHandler) GetByIdHandler(w http.ResponseWriter, r *http.Request) {
 	arr := strings.Split(r.URL.Path, "/")
 	id, err := strconv.Atoi(arr[len(arr)-1])
 	var articleResponse ArticleGetIdResponse
@@ -86,9 +87,9 @@ func (a *ArticleHandler)GetByIdHandler(w http.ResponseWriter, r *http.Request){
 	json.NewEncoder(w).Encode(articleResponse)
 }
 
-func (a *ArticleHandler)RemoveHandler(w http.ResponseWriter, r *http.Request){
+func (a *ArticleHandler) RemoveHandler(w http.ResponseWriter, r *http.Request) {
 	arr := strings.Split(r.URL.Path, "/")
-	id, err:= strconv.Atoi(arr[len(arr)-1])
+	id, err := strconv.Atoi(arr[len(arr)-1])
 	var articleResponse ArticleDeleteResponse
 	if err != nil {
 		articleResponse = ArticleDeleteResponse{http.StatusBadRequest,
@@ -96,7 +97,7 @@ func (a *ArticleHandler)RemoveHandler(w http.ResponseWriter, r *http.Request){
 			nil}
 		w.WriteHeader(http.StatusBadRequest)
 	} else {
-		title, err:= a.ArticleDao.Delete(id)
+		title, err := a.ArticleDao.Delete(id)
 		articleData := ArticleDeleteData{title}
 		if err != nil {
 			articleResponse = ArticleDeleteResponse{http.StatusFailedDependency,

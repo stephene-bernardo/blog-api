@@ -25,7 +25,7 @@ Environment Variables
 | PORT | Port of blog-api | 8080|
 |POSTGRES_HOST| Hostname of postgres | localhost|
 |POSTGRES_PORT| Port of postgres|5432|
-|POSTGRES_DB_NAME| Database name in postgres|blog|
+|POSTGRES_DB_NAME| Database name in postgres|postgres|
 |POSTGRES_USER| Postgres username|postgres|
 |POSTGRES_PASSWORD| Postgress password|abc123|
 Installing Go dependency

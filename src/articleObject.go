@@ -1,4 +1,4 @@
-package dao
+package src
 
 type ArticleObject struct {
   Id int `json:"id"`

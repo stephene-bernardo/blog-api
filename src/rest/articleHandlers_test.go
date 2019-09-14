@@ -2,7 +2,7 @@ package rest
 
 import (
 	"blog-api/mocks"
-	"blog-api/src/dao"
+	"blog-api/src"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -14,18 +14,19 @@ import (
 )
 
 var mockArticleDao *mocks.ArticleDaoInterface
-var articleObject dao.ArticleObject
+var articleObject src.ArticleObject
+
 const databaseConnectionErrorMessage = "connection to database failed"
 
 func TestMain(m *testing.M) {
-	articleObject = dao.ArticleObject{1, "Java Lang", "Some Content", "Mr.Java"}
+	articleObject = src.ArticleObject{Id: 1, Title: "Java Lang", Content: "Some Content", Author: "Mr.Java"}
 	m.Run()
 }
 
 func TestArticleHandler_GetAllHandler(t *testing.T) {
 	t.Run("getAll", func(t *testing.T) {
 		mockArticleDao = new(mocks.ArticleDaoInterface)
-		mockArticleDao.On("FindAll").Return([]dao.ArticleObject{articleObject}, nil)
+		mockArticleDao.On("FindAll").Return([]src.ArticleObject{articleObject}, nil)
 		articleHandlers := ArticleHandler{mockArticleDao}
 
 		req, _ := http.NewRequest("GET", "/articles", nil)
@@ -57,7 +58,7 @@ func TestArticleHandler_GetAllHandler(t *testing.T) {
 	})
 }
 
-func TestArticleHandler_GetByIdHandler(t *testing.T){
+func TestArticleHandler_GetByIdHandler(t *testing.T) {
 	t.Run("getById", func(t *testing.T) {
 		mockArticleDao = new(mocks.ArticleDaoInterface)
 		mockArticleDao.On("FindById", articleObject.Id).Return(articleObject, nil)
@@ -77,7 +78,7 @@ func TestArticleHandler_GetByIdHandler(t *testing.T){
 
 	t.Run("should not getById when wrong path parameter type", func(t *testing.T) {
 		mockArticleDao = new(mocks.ArticleDaoInterface)
-		mockArticleDao.On("FindById", articleObject.Id).Return(dao.ArticleObject{}, nil)
+		mockArticleDao.On("FindById", articleObject.Id).Return(src.ArticleObject{}, nil)
 		articleHandlers := ArticleHandler{mockArticleDao}
 
 		req, _ := http.NewRequest("GET", "/articles/wrongtype", nil)
@@ -113,7 +114,7 @@ func TestArticleHandler_GetByIdHandler(t *testing.T){
 	t.Run("should get response when article not found", func(t *testing.T) {
 		mockArticleDao = new(mocks.ArticleDaoInterface)
 		const missingArticle = 2
-		mockArticleDao.On("FindById", missingArticle).Return(dao.ArticleObject{}, nil)
+		mockArticleDao.On("FindById", missingArticle).Return(src.ArticleObject{}, nil)
 		articleHandlers := ArticleHandler{mockArticleDao}
 
 		req, _ := http.NewRequest("GET", "/articles/2", nil)
@@ -129,7 +130,7 @@ func TestArticleHandler_GetByIdHandler(t *testing.T){
 	})
 }
 
-func assertArticle(t *testing.T, expectedArticle dao.ArticleObject, actualArticle dao.ArticleObject) {
+func assertArticle(t *testing.T, expectedArticle src.ArticleObject, actualArticle src.ArticleObject) {
 	assert.EqualValues(t, expectedArticle.Id, actualArticle.Id)
 	assert.EqualValues(t, expectedArticle.Title, actualArticle.Title)
 	assert.EqualValues(t, expectedArticle.Content, actualArticle.Content)
@@ -183,8 +184,7 @@ func TestArticleHandler_InsertHandler(t *testing.T) {
 	t.Run("should handle missing title error", func(t *testing.T) {
 		mockArticleDao = new(mocks.ArticleDaoInterface)
 		articleHandlers := ArticleHandler{mockArticleDao}
-		jsonArticle, _ := json.Marshal(dao.ArticleObject{0, "",
-			articleObject.Content, articleObject.Author})
+		jsonArticle, _ := json.Marshal(src.ArticleObject{Content: articleObject.Content, Author: articleObject.Author})
 
 		req, _ := http.NewRequest("POST", "/articles", bytes.NewBuffer(jsonArticle))
 		rr := httptest.NewRecorder()
@@ -201,8 +201,7 @@ func TestArticleHandler_InsertHandler(t *testing.T) {
 	t.Run("should handle missing content error", func(t *testing.T) {
 		mockArticleDao = new(mocks.ArticleDaoInterface)
 		articleHandlers := ArticleHandler{mockArticleDao}
-		jsonArticle, _ := json.Marshal(dao.ArticleObject{0, articleObject.Title,
-			"", articleObject.Author})
+		jsonArticle, _ := json.Marshal(src.ArticleObject{Title: articleObject.Title, Author: articleObject.Author})
 
 		req, _ := http.NewRequest("POST", "/articles", bytes.NewBuffer(jsonArticle))
 		rr := httptest.NewRecorder()
@@ -219,8 +218,8 @@ func TestArticleHandler_InsertHandler(t *testing.T) {
 	t.Run("should handle missing author error", func(t *testing.T) {
 		mockArticleDao = new(mocks.ArticleDaoInterface)
 		articleHandlers := ArticleHandler{mockArticleDao}
-		jsonArticle, _ := json.Marshal(dao.ArticleObject{0, articleObject.Title,
-			articleObject.Content, ""})
+		jsonArticle, _ := json.Marshal(src.ArticleObject{Title: articleObject.Title,
+			Content: articleObject.Content})
 
 		req, _ := http.NewRequest("POST", "/articles", bytes.NewBuffer(jsonArticle))
 		rr := httptest.NewRecorder()
@@ -238,7 +237,7 @@ func TestArticleHandler_InsertHandler(t *testing.T) {
 		mockArticleDao = new(mocks.ArticleDaoInterface)
 		articleHandlers := ArticleHandler{mockArticleDao}
 
-		req, _ := http.NewRequest("POST", "/articles", bytes.NewBuffer( []byte(`{invalidjsonformat`)))
+		req, _ := http.NewRequest("POST", "/articles", bytes.NewBuffer([]byte(`{invalidjsonformat`)))
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(articleHandlers.InsertHandler)
 		handler.ServeHTTP(rr, req)
@@ -246,11 +245,10 @@ func TestArticleHandler_InsertHandler(t *testing.T) {
 		var response ArticlePostResponse
 		json.NewDecoder(rr.Body).Decode(&response)
 		assertStatusCode(t, http.StatusBadRequest, rr.Code, response.Status)
-		assert.NotEmpty(t,  response.Message)
+		assert.NotEmpty(t, response.Message)
 		assert.Nil(t, response.Data)
 	})
 }
-
 
 func TestArticleHandler_DeleteHandler(t *testing.T) {
 	t.Run("should handle delete article", func(t *testing.T) {
@@ -305,7 +303,7 @@ func TestArticleHandler_DeleteHandler(t *testing.T) {
 	})
 }
 
-func assertStatusCode(t *testing.T, expected ,actualHeaderStatusCode, actualBodyStatusCode int) {
+func assertStatusCode(t *testing.T, expected, actualHeaderStatusCode, actualBodyStatusCode int) {
 	assert.EqualValues(t, expected, actualHeaderStatusCode)
 	assert.EqualValues(t, expected, actualBodyStatusCode)
 }

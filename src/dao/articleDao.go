@@ -1,11 +1,12 @@
 package dao
 
 import (
+	"blog-api/src"
 	"database/sql"
-  "errors"
-  "fmt"
+	"errors"
+	"fmt"
 	"log"
-  "strconv"
+	"strconv"
 )
 
 type ArticleDao struct {
@@ -13,10 +14,10 @@ type ArticleDao struct {
 	Table string
 }
 
-func (articleDao *ArticleDao) FindAll() ([]ArticleObject, error) {
+func (articleDao *ArticleDao) FindAll() ([]src.ArticleObject, error) {
 	findAllQuery := fmt.Sprintf("SELECT * FROM %s", articleDao.Table)
 	rows, err := articleDao.Db.Query(findAllQuery)
-	articles := make([]ArticleObject, 0)
+	articles := make([]src.ArticleObject, 0)
 	if err != nil {
 		log.Println(err)
 		return articles, err
@@ -26,27 +27,27 @@ func (articleDao *ArticleDao) FindAll() ([]ArticleObject, error) {
 			var id int
 			var title, content, author string
 			rows.Scan(&id, &title, &content, &author)
-			articles = append(articles, ArticleObject{Id: id, Title: title, Content: content, Author: author})
+			articles = append(articles, src.ArticleObject{Id: id, Title: title, Content: content, Author: author})
 		}
 	}
 	return articles, err
 }
 
-func (articleDao *ArticleDao) FindById(id int) (ArticleObject, error) {
+func (articleDao *ArticleDao) FindById(id int) (src.ArticleObject, error) {
 	findByIdQuery := fmt.Sprintf("SELECT * FROM %s WHERE id = %d", articleDao.Table, id)
 	rows, err := articleDao.Db.Query(findByIdQuery)
 	if err != nil {
 		log.Println(err)
-		return ArticleObject{}, err
+		return src.ArticleObject{}, err
 	} else {
 		var title, content, author string
 		defer rows.Close()
 		if rows.Next() {
 			rows.Scan(&id, &title, &content, &author)
-			return ArticleObject{Id: id, Title: title, Content: content, Author: author}, err
+			return src.ArticleObject{Id: id, Title: title, Content: content, Author: author}, err
 		}
 	}
-	return ArticleObject{}, errors.New("Unable to find id:" + strconv.Itoa(id))
+	return src.ArticleObject{}, errors.New("Unable to find id:" + strconv.Itoa(id))
 }
 
 func (articleDao *ArticleDao) Insert(title, content, author string) (int, error) {

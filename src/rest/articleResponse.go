@@ -1,6 +1,8 @@
 package rest
 
-import "blog-api/src/dao"
+import (
+	"blog-api/src"
+)
 
 type ArticlePostResponse struct {
 	Status int `json:"status"`
@@ -13,16 +15,16 @@ type ArticlePostData struct {
 }
 
 type ArticleGetIdResponse struct {
-	Status int `json:"status"`
-	Message string `json:"message"`
-	Data *dao.ArticleObject `json:"data"`
+	Status int              `json:"status"`
+	Message string          `json:"message"`
+	Data *src.ArticleObject `json:"data"`
 }
 
 
 type ArticleGetAllResponse struct {
-	Status int `json:"status"`
-	Message string `json:"message"`
-	Data *[]dao.ArticleObject `json:"data"`
+	Status int                `json:"status"`
+	Message string            `json:"message"`
+	Data *[]src.ArticleObject `json:"data"`
 }
 
 type ArticleDeleteResponse struct {
