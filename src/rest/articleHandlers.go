@@ -23,9 +23,13 @@ type ArticleHandler struct {
 
 func (a *ArticleHandler)InsertHandler(w http.ResponseWriter, r *http.Request){
 	articleObject := dao.ArticleObject{}
-	json.NewDecoder(r.Body).Decode(&articleObject)
+	err := json.NewDecoder(r.Body).Decode(&articleObject)
 	var postResponse ArticlePostResponse
-	if articleObject.Title == "" || articleObject.Author == "" || articleObject.Content == "" {
+	if err != nil {
+		postResponse = ArticlePostResponse{http.StatusBadRequest,
+			err.Error(), nil}
+		w.WriteHeader(http.StatusBadRequest)
+	} else if articleObject.Title == "" || articleObject.Author == "" || articleObject.Content == "" {
 		postResponse = ArticlePostResponse{http.StatusBadRequest,
 			HttpResponseIncompleteRequestMessage,
 			nil}
@@ -37,11 +41,11 @@ func (a *ArticleHandler)InsertHandler(w http.ResponseWriter, r *http.Request){
 			w.WriteHeader(http.StatusFailedDependency)
 		} else {
 			postData := ArticlePostData{userid}
-			postResponse = ArticlePostResponse{201, HttpResponseCreatedMessage, &postData}
-			w.WriteHeader(201)
+			postResponse = ArticlePostResponse{http.StatusCreated,
+				HttpResponseCreatedMessage, &postData}
+			w.WriteHeader(http.StatusCreated)
 		}
 	}
-
 	json.NewEncoder(w).Encode(postResponse)
 }
 
@@ -51,10 +55,8 @@ func (a *ArticleHandler)GetAllHandler(w http.ResponseWriter, r *http.Request){
 	if err != nil {
 		articleResponse = ArticleGetAllResponse{http.StatusFailedDependency, err.Error(), nil}
 		w.WriteHeader(http.StatusFailedDependency)
-
 	} else {
-		articleResponse = ArticleGetAllResponse{200, HttpResponseSuccessMessage, &objects}
-		json.NewEncoder(w).Encode(articleResponse)
+		articleResponse = ArticleGetAllResponse{http.StatusOK, HttpResponseSuccessMessage, &objects}
 	}
 	json.NewEncoder(w).Encode(articleResponse)
 }
@@ -74,11 +76,11 @@ func (a *ArticleHandler)GetByIdHandler(w http.ResponseWriter, r *http.Request){
 			articleResponse = ArticleGetIdResponse{http.StatusFailedDependency, err.Error(), nil}
 			w.WriteHeader(http.StatusFailedDependency)
 		} else if object.Id == 0 {
-			w.WriteHeader(http.StatusNotFound)
 			articleResponse = ArticleGetIdResponse{http.StatusNotFound,
 				fmt.Sprintf(HttpResponseErrorArticleNotFound, id), nil}
+			w.WriteHeader(http.StatusNotFound)
 		} else {
-			articleResponse = ArticleGetIdResponse{200, HttpResponseSuccessMessage, &object}
+			articleResponse = ArticleGetIdResponse{http.StatusOK, HttpResponseSuccessMessage, &object}
 		}
 	}
 	json.NewEncoder(w).Encode(articleResponse)
@@ -101,7 +103,7 @@ func (a *ArticleHandler)RemoveHandler(w http.ResponseWriter, r *http.Request){
 				err.Error(), nil}
 			w.WriteHeader(http.StatusFailedDependency)
 		} else {
-			articleResponse = ArticleDeleteResponse{200, HttpResponseSuccessMessage, &articleData}
+			articleResponse = ArticleDeleteResponse{http.StatusOK, HttpResponseSuccessMessage, &articleData}
 
 		}
 	}
