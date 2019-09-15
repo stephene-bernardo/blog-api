@@ -20,7 +20,6 @@ type ArticleGetIdResponse struct {
 	Data *src.ArticleObject `json:"data"`
 }
 
-
 type ArticleGetAllResponse struct {
 	Status int                `json:"status"`
 	Message string            `json:"message"`

@@ -70,3 +70,36 @@ func TestArticleDao(t *testing.T) {
 
 	db.Query(queryStringForDropTable)
 }
+
+func TestArticleDao_WithNotExistingDb(t *testing.T) {
+	wrongDbConnectionStr := "user=NotExisting dbname=WrongDb password=WrongPassword sslmode=disable"
+	db, err := sql.Open("postgres", wrongDbConnectionStr)
+	assert.Nil(t, err)
+	defer db.Close()
+
+	articleDao := ArticleDao{db, "articlefortesting"}
+
+	t.Run("findAll", func(t *testing.T) {
+		_, err := articleDao.FindAll()
+
+		assert.Error(t, err)
+	})
+
+	t.Run("findById", func(t *testing.T) {
+		_, err := articleDao.FindById(1)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("delete article", func(t *testing.T) {
+		_, err := articleDao.Delete(3)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("insert article", func(t *testing.T) {
+		_, err := articleDao.Insert(goArticle.title, goArticle.content, goArticle.author)
+
+		assert.Error(t, err)
+	})
+}
