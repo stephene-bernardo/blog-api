@@ -1,6 +1,7 @@
 FROM golang:1.13-alpine as go_builder
 WORKDIR /go/src/blog-api
 COPY . .
+RUN apk add --no-cache git
 RUN apk add curl && curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh && dep ensure
 RUN CGO_ENABLED=0 GOOS=linux go build -o blog-api
 
