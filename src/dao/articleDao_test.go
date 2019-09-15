@@ -42,7 +42,7 @@ func TestArticleDao(t *testing.T) {
 	db.Query(queryStringForDropTable)
 	db.Query(queryStringForCreateTable)
 
-	articleDao := ArticleDao{db, "articlefortesting"}
+	articleDao := ArticleDao{db, databaseTable}
 	articleDao.Insert(goArticle.title, goArticle.content, goArticle.author)
 	articleDao.Insert(javaArticle.title, javaArticle.content, javaArticle.author)
 	articleDao.Insert(perlArticle.title, perlArticle.content, perlArticle.author)
@@ -83,7 +83,7 @@ func TestArticleDao_WithInvalidDbConnection(t *testing.T) {
 	assert.Nil(t, err)
 	defer db.Close()
 
-	articleDao := ArticleDao{db, "articlefortesting"}
+	articleDao := ArticleDao{db, "table"}
 
 	t.Run("findAll", func(t *testing.T) {
 		_, err := articleDao.FindAll()

@@ -18,6 +18,9 @@ const (
 	HttpResponseIncompleteRequestMessage  = "should specify title, content, and author"
 )
 
+const headerContentType = "Content-Type"
+const applicationJson = "application/json"
+
 type ArticleHandler struct {
 	ArticleDao dao.ArticleDaoInterface
 }
@@ -36,18 +39,18 @@ func (a *ArticleHandler) InsertHandler(w http.ResponseWriter, r *http.Request) {
 			nil}
 		w.WriteHeader(http.StatusBadRequest)
 	} else {
-		userid, err := a.ArticleDao.Insert(articleObject.Title, articleObject.Content, articleObject.Author)
+		userId, err := a.ArticleDao.Insert(articleObject.Title, articleObject.Content, articleObject.Author)
 		if err != nil {
 			postResponse = ArticlePostResponse{http.StatusFailedDependency, err.Error(), nil}
 			w.WriteHeader(http.StatusFailedDependency)
 		} else {
-			postData := ArticlePostData{userid}
+			postData := ArticlePostData{userId}
 			postResponse = ArticlePostResponse{http.StatusCreated,
 				HttpResponseCreatedMessage, &postData}
 			w.WriteHeader(http.StatusCreated)
 		}
 	}
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(headerContentType, applicationJson)
 	json.NewEncoder(w).Encode(postResponse)
 }
 
@@ -58,9 +61,13 @@ func (a *ArticleHandler) GetAllHandler(w http.ResponseWriter, r *http.Request) {
 		articleResponse = ArticleGetAllResponse{http.StatusFailedDependency, err.Error(), nil}
 		w.WriteHeader(http.StatusFailedDependency)
 	} else {
-		articleResponse = ArticleGetAllResponse{http.StatusOK, HttpResponseSuccessMessage, &objects}
+		articleResponse = ArticleGetAllResponse{
+			http.StatusOK,
+			HttpResponseSuccessMessage,
+			&objects,
+		}
 	}
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(headerContentType, applicationJson)
 	json.NewEncoder(w).Encode(articleResponse)
 }
 
@@ -69,9 +76,11 @@ func (a *ArticleHandler) GetByIdHandler(w http.ResponseWriter, r *http.Request) 
 	id, err := strconv.Atoi(arr[len(arr)-1])
 	var articleResponse ArticleGetIdResponse
 	if err != nil {
-		articleResponse = ArticleGetIdResponse{http.StatusBadRequest,
+		articleResponse = ArticleGetIdResponse{
+			http.StatusBadRequest,
 			HttpResponseErrorPathParameterMessage,
-			nil}
+			nil,
+		}
 		w.WriteHeader(http.StatusBadRequest)
 	} else {
 		object, err := a.ArticleDao.FindById(id)
@@ -83,10 +92,14 @@ func (a *ArticleHandler) GetByIdHandler(w http.ResponseWriter, r *http.Request) 
 				fmt.Sprintf(HttpResponseErrorArticleNotFound, id), nil}
 			w.WriteHeader(http.StatusNotFound)
 		} else {
-			articleResponse = ArticleGetIdResponse{http.StatusOK, HttpResponseSuccessMessage, &object}
+			articleResponse = ArticleGetIdResponse{
+				http.StatusOK,
+				HttpResponseSuccessMessage,
+				&object,
+			}
 		}
 	}
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(headerContentType, applicationJson)
 	json.NewEncoder(w).Encode(articleResponse)
 }
 
@@ -107,10 +120,13 @@ func (a *ArticleHandler) RemoveHandler(w http.ResponseWriter, r *http.Request) {
 				err.Error(), nil}
 			w.WriteHeader(http.StatusFailedDependency)
 		} else {
-			articleResponse = ArticleDeleteResponse{http.StatusOK, HttpResponseSuccessMessage, &articleData}
-
+			articleResponse = ArticleDeleteResponse{
+				http.StatusOK,
+				HttpResponseSuccessMessage,
+				&articleData,
+			}
 		}
 	}
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(headerContentType, applicationJson)
 	json.NewEncoder(w).Encode(articleResponse)
 }

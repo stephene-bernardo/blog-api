@@ -10,6 +10,7 @@ services:
       - postgresdb
     environment:
       - POSTGRES_HOST=postgresdb
+    restart: always
   postgresdb:
     image: postgres:10
     environment:

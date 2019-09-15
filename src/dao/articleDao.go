@@ -51,17 +51,18 @@ func (articleDao *ArticleDao) FindById(id int) (src.ArticleObject, error) {
 }
 
 func (articleDao *ArticleDao) Insert(title, content, author string) (int, error) {
-	var userid int
-	queryString := fmt.Sprintf("INSERT INTO %s( title, content, author) VALUES ($1, $2, $3) RETURNING id", articleDao.Table)
+	var userId int
+	queryString := fmt.Sprintf("INSERT INTO %s( title, content, author) VALUES ($1, $2, $3) RETURNING id",
+		articleDao.Table)
 	insert, err := articleDao.Db.Query(queryString, title, content, author)
 	if err != nil {
 		log.Println(err)
 	} else {
 		insert.Next()
-		insert.Scan(&userid)
-		log.Println(fmt.Sprintf("Inserted id: %d in the database", userid))
+		insert.Scan(&userId)
+		log.Println(fmt.Sprintf("Inserted id: %d in the database", userId))
 	}
-	return userid, err
+	return userId, err
 }
 
 func (articleDao *ArticleDao) Delete(id int) (string, error) {

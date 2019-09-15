@@ -10,63 +10,105 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 func main() {
-
-	baseurl := "localhost"
+	hostname := "localhost"
 	port := "8080"
 	postgresHost := "localhost"
 	postgresPort := "5432"
 	postgresDbName := "postgres"
 	postgresPassword := "abc123"
 	postgresUser := "postgres"
-	if os.Getenv("BASE_URL") != "" {
-		baseurl = os.Getenv("BASE_URL")
+	if env := os.Getenv("BASE_URL"); env != "" {
+		hostname = env
 	}
-	if os.Getenv("POSTGRES_HOST") != "" {
-		postgresHost = os.Getenv("POSTGRES_HOST")
+	if env := os.Getenv("POSTGRES_HOST"); env != "" {
+		postgresHost = env
 	}
-	if os.Getenv("POSTGRES_PORT") != "" {
-		postgresPort = os.Getenv("POSTGRES_PORT")
+	if env := os.Getenv("POSTGRES_PORT"); env != "" {
+		postgresPort = env
 	}
-	if os.Getenv("POSTGRES_DB_NAME") != "" {
-		postgresDbName = os.Getenv("POSTGRES_DB_NAME")
+	if env := os.Getenv("POSTGRES_DB_NAME"); env != "" {
+		postgresDbName = env
 	}
-	if os.Getenv("POSTGRES_USER") != "" {
-		postgresUser = os.Getenv("POSTGRES_USER")
+	if env := os.Getenv("POSTGRES_USER"); env != "" {
+		postgresUser = env
 	}
-	if os.Getenv("POSTGRES_PASSWORD") != "" {
-		postgresPassword = os.Getenv("POSTGRES_PASSWORD")
+	if env := os.Getenv("POSTGRES_PASSWORD"); env != "" {
+		postgresPassword = env
 	}
+	db := connectToDb(postgresUser, postgresDbName, postgresPassword, postgresPort, postgresHost)
+	var tableName = "article"
+	createDatabaseTable(tableName, db)
+	articleService := dao.ArticleDao{Db: db, Table: tableName}
+	articleHandler := rest.ArticleHandler{ArticleDao: &articleService}
+	articleRouter := generateArticleRouter(articleHandler)
+	log.Println(fmt.Sprintf("listening in port %s...", port))
+	err := http.ListenAndServe(fmt.Sprintf("%s:%s", hostname, port), articleRouter)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func connectToDb(postgresUser string, postgresDbName string,
+	postgresPassword string,
+	postgresPort string,
+	postgresHost string) *sql.DB {
 	connStr := fmt.Sprintf("user=%s dbname=%s password=%s port=%s sslmode=disable host=%s", postgresUser,
 		postgresDbName,
 		postgresPassword,
 		postgresPort,
 		postgresHost)
+
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
+		fmt.Println(err)
 		log.Fatal(err)
 	}
-	var databaseTable = "article"
+	return db
+}
+func waitDbConnection(postgresUser string,
+	postgresDbName string,
+	postgresPassword string,
+	postgresPort string,
+	postgresHost string) *sql.DB {
+	connStr := fmt.Sprintf("user=%s dbname=%s password=%s port=%s sslmode=disable host=%s", postgresUser,
+		postgresDbName,
+		postgresPassword,
+		postgresPort,
+		postgresHost)
+
+	var db *sql.DB
+	for {
+		log.Println("waiting for database connection...")
+		db, _ = sql.Open("postgres", connStr)
+		_, err := db.Query(fmt.Sprintf("SELECT 1 FROM pg_database WHERE datname='%s'",postgresDbName))
+		log.Println(err)
+		if err != nil {
+			break
+		}
+		time.Sleep(time.Second * 5)
+	}
+	return db
+}
+
+func createDatabaseTable(tableName string, db *sql.DB) error {
 	var queryStringForCreateTable = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (id serial not null primary key, 
-	TITLE VARCHAR, content VARCHAR, author VARCHAR)`, databaseTable)
-	_, err = db.Query(queryStringForCreateTable)
+		TITLE VARCHAR, content VARCHAR, author VARCHAR)`, tableName)
+	_, err := db.Query(queryStringForCreateTable)
 	if err != nil {
 		log.Fatal(err)
 	}
-	articleService := dao.ArticleDao{Db: db, Table: databaseTable}
-	articleHandler := rest.ArticleHandler{ArticleDao: &articleService}
+	return err
+}
 
+func generateArticleRouter(articleHandler rest.ArticleHandler) *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/articles", articleHandler.InsertHandler).Methods("POST")
 	r.HandleFunc("/articles", articleHandler.GetAllHandler).Methods("GET")
 	r.HandleFunc("/articles/{id:[0-9]+}", articleHandler.GetByIdHandler).Methods("GET")
 	r.HandleFunc("/articles/{id:[0-9]+}", articleHandler.RemoveHandler).Methods("DELETE")
-
-	fmt.Println(fmt.Sprintf("listening in port %s...", port))
-	err = http.ListenAndServe(fmt.Sprintf("%s:%s", baseurl, port), r)
-	if err != nil {
-		log.Fatal(err)
-	}
+	return r
 }
