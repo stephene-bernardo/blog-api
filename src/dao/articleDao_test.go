@@ -22,7 +22,7 @@ var perlArticle = article{"Perl", "for deletion testing", "Foo Bar"}
 func TestArticleDao(t *testing.T) {
 	host := "localhost"
 	fmt.Println(os.Getenv("POSTGRES_HOST"))
-	if os.Getenv("POSTGRES_HOST") != ""{
+	if os.Getenv("POSTGRES_HOST") != "" {
 		host = os.Getenv("POSTGRES_HOST")
 	}
 	connStr := fmt.Sprintf("user=postgres dbname=postgres password=abc123 sslmode=disable host=%s", host)

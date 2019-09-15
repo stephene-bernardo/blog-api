@@ -5,35 +5,33 @@ import (
 )
 
 type ArticlePostResponse struct {
-	Status int `json:"status"`
-	Message string `json:"message"`
-	Data *ArticlePostData `json:"data"`
+	Status  int              `json:"status"`
+	Message string           `json:"message"`
+	Data    *ArticlePostData `json:"data"`
 }
 
 type ArticlePostData struct {
-	Id int`json:"id"`
+	Id int `json:"id"`
 }
 
 type ArticleGetIdResponse struct {
-	Status int              `json:"status"`
-	Message string          `json:"message"`
-	Data *src.ArticleObject `json:"data"`
+	Status  int                `json:"status"`
+	Message string             `json:"message"`
+	Data    *src.ArticleObject `json:"data"`
 }
 
 type ArticleGetAllResponse struct {
-	Status int                `json:"status"`
-	Message string            `json:"message"`
-	Data *[]src.ArticleObject `json:"data"`
+	Status  int                  `json:"status"`
+	Message string               `json:"message"`
+	Data    *[]src.ArticleObject `json:"data"`
 }
 
 type ArticleDeleteResponse struct {
-	Status int `json:"status"`
-	Message string `json:"message"`
-	Data *ArticleDeleteData `json:"data"`
+	Status  int                `json:"status"`
+	Message string             `json:"message"`
+	Data    *ArticleDeleteData `json:"data"`
 }
 
 type ArticleDeleteData struct {
-	Title string`json:"title"`
+	Title string `json:"title"`
 }
-
-

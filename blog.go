@@ -84,7 +84,7 @@ func waitDbConnection(postgresUser string,
 	for {
 		log.Println("waiting for database connection...")
 		db, _ = sql.Open("postgres", connStr)
-		_, err := db.Query(fmt.Sprintf("SELECT 1 FROM pg_database WHERE datname='%s'",postgresDbName))
+		_, err := db.Query(fmt.Sprintf("SELECT 1 FROM pg_database WHERE datname='%s'", postgresDbName))
 		log.Println(err)
 		if err != nil {
 			break
