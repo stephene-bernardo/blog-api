@@ -34,6 +34,7 @@ Environment Variables
 |POSTGRES_DB_NAME| Database name in postgres|postgres|
 |POSTGRES_USER| Postgres username|postgres|
 |POSTGRES_PASSWORD| Postgress password|abc123|
+
 Installing Go dependency
 ```
 dep ensure
