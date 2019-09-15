@@ -1,11 +1,9 @@
 version: "3.7"
 services:
-  blogapi:
+  blogapitesting:
     build:
       context: .
-      dockerfile: Dockerfile
-    ports:
-      - 8080:8080
+      dockerfile: test.Dockerfile
     depends_on:
       - postgresdb
     environment:
@@ -15,4 +13,3 @@ services:
     environment:
       - POSTGRES_PASSWORD=abc123
     restart: always
-

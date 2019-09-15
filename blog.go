@@ -13,6 +13,7 @@ import (
 )
 
 func main() {
+
 	baseurl := "localhost"
 	port := "8080"
 	postgresHost := "localhost"
@@ -48,8 +49,8 @@ func main() {
 		log.Fatal(err)
 	}
 	var databaseTable = "article"
-	var queryStringForCreateTable = fmt.Sprintf(`CREATE TABLE %s (id serial not null primary key, TITLE VARCHAR,
-    content VARCHAR, author VARCHAR)`, databaseTable)
+	var queryStringForCreateTable = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (id serial not null primary key, 
+	TITLE VARCHAR, content VARCHAR, author VARCHAR)`, databaseTable)
 	_, err = db.Query(queryStringForCreateTable)
 	if err != nil {
 		log.Fatal(err)

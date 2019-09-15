@@ -5,6 +5,7 @@ import (
 	"fmt"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 )
 
@@ -19,7 +20,12 @@ var javaArticle = article{"Java lang", "some JAVA meaningful content", "Mr. JAVA
 var perlArticle = article{"Perl", "for deletion testing", "Foo Bar"}
 
 func TestArticleDao(t *testing.T) {
-	connStr := "user=postgres dbname=postgres password=abc123 sslmode=disable"
+	host := "localhost"
+	fmt.Println(os.Getenv("POSTGRES_HOST"))
+	if os.Getenv("POSTGRES_HOST") != ""{
+		host = os.Getenv("POSTGRES_HOST")
+	}
+	connStr := fmt.Sprintf("user=postgres dbname=postgres password=abc123 sslmode=disable host=%s", host)
 	db, err := sql.Open("postgres", connStr)
 	assert.Nil(t, err)
 	defer db.Close()
@@ -71,9 +77,9 @@ func TestArticleDao(t *testing.T) {
 	db.Query(queryStringForDropTable)
 }
 
-func TestArticleDao_WithNotExistingDb(t *testing.T) {
-	wrongDbConnectionStr := "user=NotExisting dbname=WrongDb password=WrongPassword sslmode=disable"
-	db, err := sql.Open("postgres", wrongDbConnectionStr)
+func TestArticleDao_WithInvalidDbConnection(t *testing.T) {
+	invalidDbConnectionStr := "user=NotExisting dbname=WrongDb password=WrongPassword sslmode=disable"
+	db, err := sql.Open("postgres", invalidDbConnectionStr)
 	assert.Nil(t, err)
 	defer db.Close()
 

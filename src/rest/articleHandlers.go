@@ -47,6 +47,7 @@ func (a *ArticleHandler) InsertHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusCreated)
 		}
 	}
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(postResponse)
 }
 
@@ -59,6 +60,7 @@ func (a *ArticleHandler) GetAllHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		articleResponse = ArticleGetAllResponse{http.StatusOK, HttpResponseSuccessMessage, &objects}
 	}
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(articleResponse)
 }
 
@@ -84,6 +86,7 @@ func (a *ArticleHandler) GetByIdHandler(w http.ResponseWriter, r *http.Request) 
 			articleResponse = ArticleGetIdResponse{http.StatusOK, HttpResponseSuccessMessage, &object}
 		}
 	}
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(articleResponse)
 }
 
@@ -108,5 +111,6 @@ func (a *ArticleHandler) RemoveHandler(w http.ResponseWriter, r *http.Request) {
 
 		}
 	}
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(articleResponse)
 }

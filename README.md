@@ -6,7 +6,13 @@ Application that manage articles and store it in a database.
 #### How to run
 In the blog-api directory run
 ```
-docker-compose up 
+docker-compose -f docker-compose.yml up 
+```
+
+#### How to run test
+In the blog-api directory run
+```
+docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
 ```
 
 ## Local Deployment
